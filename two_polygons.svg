@@ -24,6 +24,9 @@
     <polygon gui:edit="editable" points="68,60 100,37 125,98 64,130 40,98 40,63"
              fill="blue" opacity="0.5"/>
 
+    <polygon gui:edit="editable" points="100,37 80,10 130,180"
+             fill="blue" opacity="0.5"/>
+
 
     <circle id="a" cx="40" cy="40" r="3" fill="none" stroke="red" />
     <circle id="b" cx="280" cy="180" r="3" fill="none" stroke="red" />

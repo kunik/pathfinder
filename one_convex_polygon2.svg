@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="ISO-8859-1" standalone="no"?>
+<svg onload="init(evt)"
+     xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     xmlns:gui="http://www.kevlindev.com/gui">
+
+    <script type="text/ecmascript" xlink:href="js-intersections/2D.js"/>
+    <script type="text/ecmascript" xlink:href="pathfinder.js"/>
+
+    <defs>
+        <g id="intersection">
+            <circle r="3" fill="none" stroke="red" stroke-width="1"/>
+            <circle r="1" fill="black"/>
+        </g>
+
+        <g id="point">
+            <circle r="2" fill="none" stroke="blue" stroke-width="1"/>
+        </g>
+    </defs>
+
+    <rect id="background" width="100%" height="100%" opacity="0"
+          onmousedown="mouser.unregisterShapes()"/>
+
+    <polygon gui:edit="editable" points="52,58 114,55 139,116 78,148 54,116 45,81"
+             fill="blue" opacity="0.5"/>
+
+
+    <circle id="a" cx="40" cy="40" r="3" fill="none" stroke="red" />
+    <circle id="b" cx="280" cy="180" r="3" fill="none" stroke="red" />
+
+    <text id="info" x="5" y="10pt" font-size="10pt">Loading...</text>
+</svg>
