@@ -18,7 +18,7 @@ var PathFinder = (function() {
                 var destenationPoints = [to];
                 var stablePoints = [from];
 
-                var nextPoint, currentPoint, newLine, intersection;
+                var nextPoint, nextStablePoint, currentPoint, newLine, intersection;
 
                 while (--stop && destenationPoints.length) {
                     nextPoint = destenationPoints.pop();
@@ -31,8 +31,9 @@ var PathFinder = (function() {
 
                     if (intersection !== undefined) {
                         console.log("Resolving intersection");
-                        stablePoints.push(getClosestStablePoint(currentPoint, intersection));
-                        destenationPoints.push(nextPoint, getNextPoint(currentPoint, nextPoint, intersection));
+                        nextStablePoint = getClosestStablePoint(currentPoint, intersection);
+                        stablePoints.push(nextStablePoint);
+                        destenationPoints.push(nextPoint, getNextPoint(nextStablePoint, nextPoint, intersection));
                     } else {
                         stablePoints.push(nextPoint);
                         console.log("No intersections on current step. Moving forward");
@@ -51,70 +52,34 @@ var PathFinder = (function() {
     };
 
     function getNextPoint(stablePoint, unstablePoint, intersection) {
-        var distances = getBypassDistances(stablePoint, unstablePoint, intersection);
-//        var leftMax = distances[distances.length - 1];
-//        var rightMax = distances[0];
-//
-//        if ()
-//
-//        console.log(distances);
-
-        return new Point2D(100,20);
-
-//        (-20+40)/(20-40)
-
-//        shapeEdges.sort(function(point) {
-//            function distance(a, b) {
-//                return Math.sqrt(Math.pow((b.x - a.x), 2) + Math.pow((b.y - a.y), 2));
-//            }
-//
-//            return function(a, b) {
-//                return distance(point, a) - distance(point, b);
-//            };
-//        }(intersection.point));
-//
-//        for (var i = 1; i < shapeEdges.length; ++i) {
-//            if ()
-//        }
-//
-    }
-
-    function getBypassDistances(from, to, intersection) {
         var shapeEdges = intersection.shape.getIntersectionParams().params[0];
-        var distances = [];
-        var edges = {};
+        var from, to;
 
-        for (var i = 0, distance; i < shapeEdges.length; ++i) {
+        for (var i = 1; i < shapeEdges.length; ++i) {
+            if (areCollinear(intersection.point, shapeEdges[i-1], shapeEdges[i])) {
+                console.log(intersection.point + ", " + shapeEdges[i-1] + ", " + shapeEdges[i] + " are collinear");
+                from = intersection.point;
+                to = shapeEdges[i];
 
-            distance = getDistanceFromPointToLine(from, to, shapeEdges[i]);
-            distances.push(distance);
-            edges["" + distance] = shapeEdges[i];
+                break;
+            }
         }
 
-        distances.sort(function(a, b) {return a - b;});
+        var dx = to.x - from.x;
+        var dy = to.y - from.y;
 
-        return {
-            sortedDistances: distances,
-            edges: edges
-        };
+        return moveAlongLine(stablePoint, new Point2D(stablePoint.x + dx, stablePoint.y + dy), 1);
+
     }
 
-    function getDistanceFromPointToLine(p0, p1, p) {
-        return ((p0.y - p1.y) * p.x + (p1.x - p0.x) * p.y + (p0.x * p1.y - p1.x * p0.y)) / Math.sqrt(Math.pow(p1.x - p0.x, 2) + Math.pow(p1.y - p0.y, 2));
+    function areCollinear(p1, p2, p3) {
+        var coef = getLineCoefficients(p2, p1);
+        return Math.abs(coef.k * p3.x + coef.b - p3.y) < 0.01;
     }
 
     function getClosestStablePoint(from, intersection) {
         var to = intersection.point;
-        var x1, y1;
-
-        var k = (to.y - from.y) / (to.x - from.x);
-        var b = to.y - k * to.x;
-        var dx = Math.sqrt(Math.pow(offset, 2) / (1 + Math.pow(k, 2)));
-
-        x1 = to.x - dx;
-        y1 = k * x1 + b;
-
-        return new Point2D(x1, y1);
+        return moveAlongLine(from, to, -1);
     }
 
     function getClosestIntersection(path, barriers) {
@@ -133,6 +98,27 @@ var PathFinder = (function() {
         }
 
         return intersections[0];
+    }
+
+    function moveAlongLine(from, to, direction) {
+        var coef = getLineCoefficients(from, to);
+        var x, y;
+
+        var dx = Math.sqrt(Math.pow(offset, 2) / (1 + Math.pow(coef.k, 2)));
+
+        x = to.x + dx * direction;
+        y = coef.k * x + coef.b;
+
+        return new Point2D(x, y);
+    }
+
+    function getLineCoefficients(from, to) {
+        var k = (to.y - from.y) / (to.x - from.x);
+
+        return {
+            k: k,
+            b: to.y - k * to.x
+        };
     }
 
     function buildStep(from, to) {
