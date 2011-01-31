@@ -15,36 +15,49 @@ var PathFinder = (function() {
             },
 
             getEdgePoints: function() {
-                console.log(barriers);
-                var path;
-                var lastStablePoint = from;
+                var destenationPoints = [to];
+                var stablePoints = [from];
 
-                while (--stop) {
-                    path = tryPath(lastStablePoint, to);
-                    var intersection = getClosestIntersection(path, barriers);
+                var nextPoint, currentPoint, newLine, intersection;
 
-                    if (intersection === undefined) {
-                        console.log("Done");
-                        return;
+                while (--stop && destenationPoints.length) {
+                    nextPoint = destenationPoints.pop();
+                    currentPoint = stablePoints[stablePoints.length - 1];
+
+                    drawPoint(currentPoint);
+
+                    newLine = buildStep(currentPoint, nextPoint);
+                    intersection = getClosestIntersection(newLine, barriers);
+
+                    if (intersection !== undefined) {
+                        console.log("Resolving intersection");
+                        stablePoints.push(getClosestStablePoint(currentPoint, intersection));
+                        destenationPoints.push(nextPoint, getNextPoint(currentPoint, nextPoint, intersection));
+                    } else {
+                        stablePoints.push(nextPoint);
+                        console.log("No intersections on current step. Moving forward");
                     }
-
-                    lastStablePoint = getClosestStablePoint(lastStablePoint, intersection.point, offset);
-                    drawPoint(lastStablePoint);
-
-                    var workaround = getNextPoint(intersection, lastStablePoint);
-                    drawPoint(workaround);
-
-                    path = tryPath(lastStablePoint, workaround);
-                    lastStablePoint = workaround;
                 }
 
-                console.log("Killed");
+                if (stop == 0) {
+                    console.log("Killed");
+                } else {
+                    console.log("Done");
+                }
+
+
             }
         };
     };
 
-    function getNextPoint(intersection, stablePoint) {
-        var shapeEdges = intersection.shape.getIntersectionParams().params[0];
+    function getNextPoint(stablePoint, unstablePoint, intersection) {
+        var distances = getBypassDistances(stablePoint, unstablePoint, intersection);
+//        var leftMax = distances[distances.length - 1];
+//        var rightMax = distances[0];
+//
+//        if ()
+//
+//        console.log(distances);
 
         return new Point2D(100,20);
 
@@ -66,7 +79,32 @@ var PathFinder = (function() {
 //
     }
 
-    function getClosestStablePoint(from, to, offset) {
+    function getBypassDistances(from, to, intersection) {
+        var shapeEdges = intersection.shape.getIntersectionParams().params[0];
+        var distances = [];
+        var edges = {};
+
+        for (var i = 0, distance; i < shapeEdges.length; ++i) {
+
+            distance = getDistanceFromPointToLine(from, to, shapeEdges[i]);
+            distances.push(distance);
+            edges["" + distance] = shapeEdges[i];
+        }
+
+        distances.sort(function(a, b) {return a - b;});
+
+        return {
+            sortedDistances: distances,
+            edges: edges
+        };
+    }
+
+    function getDistanceFromPointToLine(p0, p1, p) {
+        return ((p0.y - p1.y) * p.x + (p1.x - p0.x) * p.y + (p0.x * p1.y - p1.x * p0.y)) / Math.sqrt(Math.pow(p1.x - p0.x, 2) + Math.pow(p1.y - p0.y, 2));
+    }
+
+    function getClosestStablePoint(from, intersection) {
+        var to = intersection.point;
         var x1, y1;
 
         var k = (to.y - from.y) / (to.x - from.x);
@@ -97,10 +135,9 @@ var PathFinder = (function() {
         return intersections[0];
     }
 
-    function tryPath(from, to) {
+    function buildStep(from, to) {
         return new Line(drawLine(from, to));
     }
-
 
 
     function drawLine(from, to) {
